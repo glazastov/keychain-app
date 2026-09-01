@@ -1,11 +1,7 @@
 //! JNI bridge exposing post-quantum primitives from liboqs (ML-KEM / ML-DSA)
-//! to the Kotlin `:crypto-pqc` module.
-//!
-//! This crate is original code: it does not link against, wrap, or derive
-//! from any OpenKeychain (GPL) source. It knows nothing about OpenPGP packet
-//! formats, keyrings, or passphrase caching — those concerns live entirely
-//! in `:crypto-pqc` (Kotlin), which calls into this crate only for the raw
-//! algorithm operations (keygen / encapsulate / decapsulate / sign / verify).
+//! to the Kotlin `:crypto-pqc` module. Exposes only raw algorithm operations
+//! (keygen / encapsulate / decapsulate / sign / verify) — OpenPGP packet
+//! formats, keyrings, and passphrase caching are the Kotlin side's concern.
 
 use jni::objects::{JByteArray, JClass};
 use jni::sys::jbyteArray;
@@ -50,7 +46,7 @@ fn jbytearray_to_vec(env: &JNIEnv, arr: &JByteArray) -> jni::errors::Result<Vec<
 /// getters below — kept simple: we return the concatenation `pk || sk` and let
 /// the Kotlin side slice it using the known fixed lengths for the algorithm.
 #[no_mangle]
-pub extern "system" fn Java_com_keychain_crypto_pqc_native_KemNative_generateKeypair(
+pub extern "system" fn Java_com_keychain_crypto_pqc_jni_KemNative_generateKeypair(
     mut env: JNIEnv,
     _class: JClass,
 ) -> jbyteArray {
@@ -74,7 +70,7 @@ pub extern "system" fn Java_com_keychain_crypto_pqc_native_KemNative_generateKey
 
 /// Encapsulates against `publicKey`, returning `ciphertext || sharedSecret`.
 #[no_mangle]
-pub extern "system" fn Java_com_keychain_crypto_pqc_native_KemNative_encapsulate<'l>(
+pub extern "system" fn Java_com_keychain_crypto_pqc_jni_KemNative_encapsulate<'l>(
     mut env: JNIEnv<'l>,
     _class: JClass<'l>,
     public_key: JByteArray<'l>,
@@ -107,7 +103,7 @@ pub extern "system" fn Java_com_keychain_crypto_pqc_native_KemNative_encapsulate
 
 /// Decapsulates `ciphertext` using `secretKey`, returning the shared secret.
 #[no_mangle]
-pub extern "system" fn Java_com_keychain_crypto_pqc_native_KemNative_decapsulate<'l>(
+pub extern "system" fn Java_com_keychain_crypto_pqc_jni_KemNative_decapsulate<'l>(
     mut env: JNIEnv<'l>,
     _class: JClass<'l>,
     secret_key: JByteArray<'l>,
@@ -146,7 +142,7 @@ pub extern "system" fn Java_com_keychain_crypto_pqc_native_KemNative_decapsulate
 
 /// Generates an ML-DSA-65 keypair, returning `publicKey || secretKey`.
 #[no_mangle]
-pub extern "system" fn Java_com_keychain_crypto_pqc_native_SigNative_generateKeypair(
+pub extern "system" fn Java_com_keychain_crypto_pqc_jni_SigNative_generateKeypair(
     mut env: JNIEnv,
     _class: JClass,
 ) -> jbyteArray {
@@ -170,7 +166,7 @@ pub extern "system" fn Java_com_keychain_crypto_pqc_native_SigNative_generateKey
 
 /// Signs `message` with `secretKey`, returning the detached signature.
 #[no_mangle]
-pub extern "system" fn Java_com_keychain_crypto_pqc_native_SigNative_sign<'l>(
+pub extern "system" fn Java_com_keychain_crypto_pqc_jni_SigNative_sign<'l>(
     mut env: JNIEnv<'l>,
     _class: JClass<'l>,
     secret_key: JByteArray<'l>,
@@ -205,7 +201,7 @@ pub extern "system" fn Java_com_keychain_crypto_pqc_native_SigNative_sign<'l>(
 
 /// Verifies `signature` over `message` against `publicKey`. Returns a Java boolean (jni::sys::jboolean).
 #[no_mangle]
-pub extern "system" fn Java_com_keychain_crypto_pqc_native_SigNative_verify<'l>(
+pub extern "system" fn Java_com_keychain_crypto_pqc_jni_SigNative_verify<'l>(
     mut env: JNIEnv<'l>,
     _class: JClass<'l>,
     public_key: JByteArray<'l>,
